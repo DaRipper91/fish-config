@@ -25,18 +25,16 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
     function __pkg_center
         set -l str "$argv"
         # Strip ANSI codes to get visual length
-        set -l plain_str (echo -e "$str" | sed 's/\x1b\[[0-9;]*m//g')
+        set -l plain_str (string replace -ra '\x1b\[[0-9;]*m' '' "$str")
         set -l str_len (string length "$plain_str")
-        if type -q tput
-            set term_width (tput cols)
-        else
+        set -l term_width $COLUMNS
+        if test -z "$term_width"
             set term_width 80
         end
         set -l padding (math -s0 "($term_width - $str_len) / 2")
 
         if test $padding -gt 0
-            set -l pad_str (string repeat -n $padding " ")
-            echo "$pad_str$str"
+            printf "%*s%s\n" $padding "" "$str"
         else
             echo "$str"
         end
@@ -57,14 +55,14 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
             set -l line "$_dap_c_lav[LOAD] $_dap_c_yellow$_dap_sym_pac $eaten$_dap_c_rst$uneaten $_dap_c_lav(System waking...)$_dap_c_rst"
 
             # Centering the loader
-            set -l plain_line (echo -e "$line" | sed 's/\x1b\[[0-9;]*m//g')
-            set -l term_cols (tput cols)
-            set -l padding (math -s0 "($term_cols - (string length \"$plain_line\")) / 2")
-             if test $padding -gt 0
-                printf "\r%s%s" (string repeat -n $padding " ") "$line"
-             else
-                printf "\r%s" "$line"
-             end
+            set -l plain_line (string replace -ra '\x1b\[[0-9;]*m' '' "$line")
+            set -l str_len (string length "$plain_line")
+            set -l term_width $COLUMNS
+            if test -z "$term_width"
+                set term_width 80
+            end
+            set -l padding (math -s0 "($term_width - $str_len) / 2")
+            printf "\r%*s%s" $padding "" "$line"
             sleep 0.08
         end
         echo -e "\n"
@@ -73,23 +71,18 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
 
     function __pkg_draw_header
         clear
-        set -l pkg_count "N/A"
-        if type -q pacman
-            set pkg_count (pacman -Qq | count)
-        end
+        # Pacman is essential for this tool
+        set -l pkg_count (pacman -Qq | count)
 
         set -l cpu_temp "N/A"
         if type -q sensors
-            set cpu_temp (sensors 2>/dev/null | grep "Package id 0" | awk '{print $4}' | sed 's/+//')
+            set cpu_temp (sensors 2>/dev/null | grep "Package id 0" | awk '{print $4}' | string replace '+' '')
         end
 
         set -l ram_use "N/A"
-        if type -q free
-            set ram_use (free -h | grep "Mem:" | awk '{print $3 "/" $2}')
-        end
-
         set -l swap_use "N/A"
         if type -q free
+            set ram_use (free -h | grep "Mem:" | awk '{print $3 "/" $2}')
             set swap_use (free -h | grep "Swap:" | awk '{print $3}')
         end
 
@@ -111,7 +104,8 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
         __pkg_draw_header
 
         set -l kernel (uname -r)
-        set -l uptime_val (uptime -p | sed 's/up //')
+        set -l uptime_val (uptime -p | string replace 'up ' '')
+        
         set -l birth_date "Unknown"
         if type -q expac
             set birth_date (expac -Q '%l' filesystem | head -n1)
@@ -138,12 +132,12 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
 
         # Centering the prompt itself
         set -l prompt_text "   Select Action :: "
-        if type -q tput
-            set term_cols (tput cols)
-        else
-            set term_cols 80
+        set -l prompt_len (string length "$prompt_text")
+        set -l term_width $COLUMNS
+        if test -z "$term_width"
+            set term_width 80
         end
-        set -l prompt_pad (math -s0 "($term_cols - 70) / 2") # Adjusted for the dash box width
+        set -l prompt_pad (math -s0 "($term_width - 70) / 2") # Adjusted for the dash box width
 
         if test $prompt_pad -lt 0
             set prompt_pad 0
