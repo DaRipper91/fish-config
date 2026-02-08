@@ -11,7 +11,9 @@ else if not set -q GOOGLE_API_KEY
 end
 
 # Starship Prompt
-starship init fish | source
+if status is-interactive
+    starship init fish | source
+end
 
 # Gemini Model Switcher
 function gswitch
@@ -45,15 +47,11 @@ function gswitch
 end
 
 # Google Drive Sync
-function gpull
-    echo "⬇️ Syncing Drive (Skipping: Videos & linux-tkg)..."
-    rclone copy gdrive: ~/drive \
-        --exclude "Videos From Backups/**" \
-        --exclude "linux-tkg/**" \
-        --update -P
-    echo "✅ Sync Complete."
+# gpull is autoloaded
+
+if status is-interactive
+    fastfetch
 end
-fastfetch
 alias sweep="python3 ~/ops/librarian.py"
 
 # pnpm
