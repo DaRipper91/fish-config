@@ -1,0 +1,8 @@
+# Secret files
+secrets.fish
+
+# Fish universal variables (can contain secrets)
+fish_variables
+
+# Backup files
+*.bak
