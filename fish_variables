@@ -1,6 +1,5 @@
 # This file contains fish universal variable definitions.
 # VERSION: 3.0
-SETUVAR --export GEMINI_API_KEY:AIzaSyBT40zUR\x2dcBMLDCCdcifXzIsdZ6wij3S0g
 SETUVAR ZO_CMD:zo
 SETUVAR Z_CMD:z
 SETUVAR Z_DATA:/home/daripper/\x2elocal/share/z/data
