@@ -15,7 +15,20 @@ starship init fish | source
 
 # Gemini Model Switcher
 function gswitch
+    # Dependency check: jq
+    if not type -q jq
+        echo "❌ Error: 'jq' is not installed. Please install it to use this function."
+        return 1
+    end
+
     set config ~/.gemini/settings.json
+
+    # Config file check
+    if not test -f $config
+        echo "❌ Error: Config file '$config' not found."
+        return 1
+    end
+
     set current (jq -r '.model.name // .model' $config)
 
     if string match -q "gemini-3-flash-preview" $current
@@ -44,7 +57,7 @@ fastfetch
 alias sweep="python3 ~/ops/librarian.py"
 
 # pnpm
-set -gx PNPM_HOME "/home/daripper/.local/share/pnpm"
+set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 if not string match -q -- $PNPM_HOME $PATH
   set -gx PATH "$PNPM_HOME" $PATH
 end
@@ -55,4 +68,5 @@ set -gx CARGO_HOME "$HOME/.cargo"
 if not string match -q -- "$CARGO_HOME/bin" $PATH
   set -gx PATH "$CARGO_HOME/bin" $PATH
 end
-alias jarvis="terminal-jarvis"fnm env --use-on-cd | source
+alias jarvis="terminal-jarvis"
+fnm env --use-on-cd | source
