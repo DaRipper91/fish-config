@@ -51,9 +51,16 @@ git clone https://github.com/yourusername/fish-config.git ~/.config/fish
 ```
 
 ### 3. Setup Environment Variables
-Update `config.fish` with your API keys and preferences:
-- **`GOOGLE_API_KEY`**: Your Google API key for Gemini. **(Ensure this is kept private!)**
-- **`LS_COLORS`**: Custom `ls` colors.
+Manage your private keys using a `secrets.fish` file (which is ignored by git):
+1. Create `secrets.fish` in the configuration root:
+   ```fish
+   cp secrets.fish.example secrets.fish
+   ```
+2. Edit `secrets.fish` with your actual API keys:
+   - **`GOOGLE_API_KEY`**: Your Google API key for Gemini.
+   - **`GEMINI_API_KEY`**: Typically the same as above, but separated for flexibility.
+
+**IMPORTANT:** Never commit your `secrets.fish` file to a public repository.
 
 ### 4. Create Directory Structure
 Create the `~/ops` directory structure required for advanced features:
