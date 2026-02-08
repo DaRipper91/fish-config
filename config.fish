@@ -6,36 +6,19 @@ set -gx LS_COLORS "di=01;38;2;255;0;102:ln=01;38;2;0;255;204:ex=01;38;2;57;255;0
 set -gx GOOGLE_API_KEY "AIzaSyBT40zUR-cBMLDCCdcifXzIsdZ6wij3S0g"
 
 # Starship Prompt
-starship init fish | source
+if status is-interactive
+    starship init fish | source
+end
 
 # Gemini Model Switcher
-function gswitch
-    set config ~/.gemini/settings.json
-    set current (jq -r '.model.name // .model' $config)
-
-    if string match -q "gemini-3-flash-preview" $current
-        set new_model "gemini-3-pro-preview"
-        set mode_name "🧠 GEMINI 3 PRO (Maximum Intelligence)"
-    else
-        set new_model "gemini-3-flash-preview"
-        set mode_name "⚡ GEMINI 3 FLASH (Speed & Logic)"
-    end
-
-    # Safe JSON update
-    jq --arg nm "$new_model" '.model = { "name": $nm }' $config > $config.tmp && mv $config.tmp $config
-    echo -e "Gemini CLI switched to: $mode_name"
-end
+# gswitch is autoloaded
 
 # Google Drive Sync
-function gpull
-    echo "⬇️ Syncing Drive (Skipping: Videos & linux-tkg)..."
-    rclone copy gdrive: ~/drive \
-        --exclude "Videos From Backups/**" \
-        --exclude "linux-tkg/**" \
-        --update -P
-    echo "✅ Sync Complete."
+# gpull is autoloaded
+
+if status is-interactive
+    fastfetch
 end
-fastfetch
 alias sweep="python3 ~/ops/librarian.py"
 
 # pnpm
@@ -50,4 +33,5 @@ set -gx CARGO_HOME "$HOME/.cargo"
 if not string match -q -- "$CARGO_HOME/bin" $PATH
   set -gx PATH "$CARGO_HOME/bin" $PATH
 end
-alias jarvis="terminal-jarvis"fnm env --use-on-cd | source
+alias jarvis="terminal-jarvis"
+fnm env --use-on-cd | source
