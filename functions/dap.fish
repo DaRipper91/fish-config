@@ -22,13 +22,13 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
     function __pkg_center
         set -l str "$argv"
         # Strip ANSI codes to get visual length
-        set -l plain_str (echo -e "$str" | sed 's/\x1b\[[0-9;]*m//g')
+        set -l plain_str (string replace -ra '\x1b\[[0-9;]*m' '' "$str")
         set -l str_len (string length "$plain_str")
-        set -l term_width (tput cols)
+        set -l term_width $COLUMNS
         set -l padding (math -s0 "($term_width - $str_len) / 2")
 
         if test $padding -gt 0
-            printf "%"(echo $padding)"s%s\n" "" "$str"
+            printf "%*s%s\n" $padding "" "$str"
         else
             printf "%s\n" "$str"
         end
@@ -45,9 +45,11 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
             set -l uneaten (string sub -s (math $i + 1) "$dots")
             set -l line "$c_lav[LOAD] $c_yellow$sym_pac $eaten$c_rst$uneaten $c_lav(System waking...)$c_rst"
             # Centering the loader
-            set -l plain_line (echo -e "$line" | sed 's/\x1b\[[0-9;]*m//g')
-            set -l padding (math -s0 "((tput cols) - (string length \"$plain_line\")) / 2")
-            printf "\r%s%s" (string repeat -n $padding " ") "$line"
+            set -l plain_line (string replace -ra '\x1b\[[0-9;]*m' '' "$line")
+            set -l str_len (string length "$plain_line")
+            set -l term_width $COLUMNS
+            set -l padding (math -s0 "($term_width - $str_len) / 2")
+            printf "\r%*s%s" $padding "" "$line"
             sleep 0.08
         end
         echo -e "\n"
@@ -57,7 +59,7 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
     function __pkg_draw_header
         clear
         set -l pkg_count (pacman -Qq | count)
-        set -l cpu_temp (sensors 2>/dev/null | grep "Package id 0" | awk '{print $4}' | sed 's/+//')
+        set -l cpu_temp (sensors 2>/dev/null | grep "Package id 0" | awk '{print $4}' | string replace '+' '')
         set -l ram_use (free -h | grep "Mem:" | awk '{print $3 "/" $2}')
         set -l swap_use (free -h | grep "Swap:" | awk '{print $3}')
 
@@ -79,7 +81,7 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
         __pkg_draw_header
 
         set -l kernel (uname -r)
-        set -l uptime_val (uptime -p | sed 's/up //')
+        set -l uptime_val (uptime -p | string replace 'up ' '')
         set -l birth_date (expac -Q '%l' filesystem | head -n1; or echo "Unknown")
 
         __pkg_center "$c_gray  Kernel: $c_white$kernel     $c_gray  Uptime: $c_white$uptime_val     $c_gray 🎂 Born: $c_white$birth_date $c_rst"
@@ -104,7 +106,7 @@ function dap --description 'DA-PACAGER: The Pastel Pacman Architect (Gold Master
         # Centering the prompt itself
         set -l prompt_text "   Select Action :: "
         set -l prompt_len (string length "$prompt_text")
-        set -l prompt_pad (math -s0 "((tput cols) - 70) / 2") # Adjusted for the dash box width
+        set -l prompt_pad (math -s0 "($COLUMNS - 70) / 2") # Adjusted for the dash box width
 
         read -P (string repeat -n $prompt_pad " ")"Select Action :: " choice
 
