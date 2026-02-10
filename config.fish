@@ -3,7 +3,14 @@ set -gx LS_COLORS "di=01;38;2;255;0;102:ln=01;38;2;0;255;204:ex=01;38;2;57;255;0
 
 # --- Google API & Secrets Management ---
 # Keys are moved to secrets.fish (ignored by git) for security.
-set -l secrets_file (dirname (status filename))/secrets.fish
+# Optimization: Use string replacement instead of external dirname for speed
+set -l _source_file (status filename)
+if string match -q -- "*/*" $_source_file
+    set -l secrets_file (string replace -r '/[^/]*$' '' $_source_file)/secrets.fish
+else
+    set -l secrets_file ./secrets.fish
+end
+
 if test -f $secrets_file
     source $secrets_file
 else
