@@ -1,10 +1,16 @@
 function da-stats --description "Mesh Resource Intel"
     # Header
-    echo -s (set_color -o blue) "📊 SYSTEM INTEL: " (set_color green) (hostname) (set_color normal)
+    # Optimization: Use $hostname variable instead of command
+    echo -s (set_color -o blue) "📊 SYSTEM INTEL: " (set_color green) $hostname (set_color normal)
     echo -s (set_color brblack) "---" (set_color normal)
 
     # Disk Usage
-    set -l disk_p (df -h / | tail -1 | awk '{print $5}' | string replace '%' '')
+    # Optimization: Use df -hP and string parsing instead of tail|awk
+    # df -hP / outputs standard posix format, 5th column is percentage
+    set -l df_out (df -hP / | tail -n 1)
+    # Split by whitespace, get 5th element
+    set -l disk_p (string replace '%' '' (string split -n " " $df_out)[5])
+
     set -l color_disk green
     if test "$disk_p" -ge 90
         set color_disk red
@@ -14,8 +20,12 @@ function da-stats --description "Mesh Resource Intel"
     echo -s (set_color -o) "💾 Disk Usage: " (set_color $color_disk) $disk_p% (set_color normal)
 
     # Memory Usage
-    set -l mem_used (free -m | grep Mem | awk '{print $3}')
-    set -l mem_total (free -m | grep Mem | awk '{print $2}')
+    # Optimization: Call free once and parse with string split
+    set -l mem_out (free -m | string match -r '^Mem:.*')
+    set -l mem_vals (string split -n " " $mem_out)
+    set -l mem_total $mem_vals[2]
+    set -l mem_used $mem_vals[3]
+
     set -l mem_p (math -s0 "$mem_used / $mem_total * 100")
     set -l color_mem green
     if test "$mem_p" -ge 90
@@ -26,12 +36,20 @@ function da-stats --description "Mesh Resource Intel"
     echo -s (set_color -o) "🧠 Memory:     " (set_color $color_mem) $mem_p% (set_color normal) " ($mem_used/$mem_total MiB)"
 
     # CPU Load
-    set -l load (uptime | awk -F'load average:' '{ print $2 }' | string split ',' | head -n1 | string trim)
+    # Optimization: Parse uptime output with string match instead of awk/split/head
+    set -l uptime_out (uptime)
+    set -l load_str (string match -r 'load average: (.*)' $uptime_out)[2]
+    set -l load (string split -m1 ',' $load_str)[1]
+    set load (string trim $load)
+
+    # Optimization: Integer math for load check (avoid awk spawn)
+    # Get integer part of load (e.g. 4.05 -> 4)
+    set -l load_int (string split -m1 . (string replace , . $load))[1]
+
     set -l color_cpu green
-    # Use awk for float comparison
-    if awk "BEGIN {exit !($load > 4.0)}"
+    if test "$load_int" -ge 4
         set color_cpu red
-    else if awk "BEGIN {exit !($load > 2.0)}"
+    else if test "$load_int" -ge 2
         set color_cpu yellow
     end
     echo -s (set_color -o) "🌡️  CPU Load:   " (set_color $color_cpu) $load (set_color normal)
