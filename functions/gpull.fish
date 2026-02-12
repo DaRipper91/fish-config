@@ -6,3 +6,6 @@ function gpull
         --update -P
     echo "✅ Sync Complete."
 end
+fastfetch
+alias sweep="python3 ~/ops/librarian.py"
+
