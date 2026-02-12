@@ -110,3 +110,6 @@ da-stats
 ```fish
 da-find
 ```
+
+## 🤖 AI-Ready
+This repo adheres to the Repomix standard. Run `repomix` to pack the codebase for LLM context.

@@ -6,3 +6,8 @@ fish_variables
 
 # Backup files
 *.bak
+
+# AI Context
+repomix-context.xml
+repomix-output.json
+repomix-output.md
