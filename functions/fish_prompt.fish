@@ -38,28 +38,31 @@ function fish_prompt
     # -----------------------------------------------------------------
 
     # [CPU] Load
-    set -l cpu_load (cat /proc/loadavg | cut -d ' ' -f1)
+    read -l load < /proc/loadavg
+    set -l cpu_load (string split -f1 " " $load)
     set -l cpu_display "  $cpu_load "
 
     # [RAM] Used
-    set -l mem_total (grep MemTotal /proc/meminfo | awk '{print $2}')
-    set -l mem_free (grep MemAvailable /proc/meminfo | awk '{print $2}')
+    read -z meminfo < /proc/meminfo
+    set -l mem_total (string match -r "MemTotal:\s+(\d+)" $meminfo)[2]
+    set -l mem_free (string match -r "MemAvailable:\s+(\d+)" $meminfo)[2]
     set -l mem_used_mb (math "($mem_total - $mem_free) / 1024")
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
-    set -l disk_display "  "(df -h / | awk 'NR==2 {print $4}')" "
+    set -l df_out (df -hP /)
+    set -l disk_avail (string split -n " " $df_out[2])[4]
+    set -l disk_display "  $disk_avail "
 
     # [NET] Interface + IP
-    set -l iface (ip route get 1.1.1.1 2>/dev/null | grep -oP 'dev \K\S+')
+    set -l ip_out (ip route get 1.1.1.1 2>/dev/null)
     set -l net_display "  Offline "
-    set -l icon ""
-    if test -n "$iface"
-        set -l ip_addr (ip -4 addr show $iface | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+
+    if test $status -eq 0
+        set -l iface (string match -r "dev\s+(\S+)" $ip_out)[2]
+        set -l icon ""
         if string match -q "wlan*" $iface
             set icon ""
-        else
-            set icon ""
         end
         set net_display " $icon $iface "
     end
