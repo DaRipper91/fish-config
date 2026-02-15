@@ -1,6 +1,11 @@
 function fish_prompt
     set -l last_status $status
-    set -l term_width (tput cols)
+
+    # Optimization: Use $COLUMNS for terminal width (builtin)
+    set -l term_width $COLUMNS
+    if test -z "$term_width"
+        set term_width (tput cols)
+    end
 
     # -----------------------------------------------------------------
     # 1. THE CHAOS ENGINE (Added Case 5: HOLO-FLUX)
@@ -38,30 +43,44 @@ function fish_prompt
     # -----------------------------------------------------------------
 
     # [CPU] Load
-    set -l cpu_load (cat /proc/loadavg | cut -d ' ' -f1)
+    # Optimization: Read /proc/loadavg directly (avoids cat + cut)
+    read -l load_line < /proc/loadavg
+    set -l cpu_load (string split -f1 " " $load_line)
     set -l cpu_display "  $cpu_load "
 
     # [RAM] Used
-    set -l mem_total (grep MemTotal /proc/meminfo | awk '{print $2}')
-    set -l mem_free (grep MemAvailable /proc/meminfo | awk '{print $2}')
+    # Optimization: Read /proc/meminfo directly and regex match (avoids grep + awk)
+    read -z mem_info < /proc/meminfo
+    set -l mem_total (string match -r "MemTotal:\s+(\d+)" $mem_info)[2]
+    set -l mem_free (string match -r "MemAvailable:\s+(\d+)" $mem_info)[2]
     set -l mem_used_mb (math "($mem_total - $mem_free) / 1024")
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
-    set -l disk_display "  "(df -h / | awk 'NR==2 {print $4}')" "
+    # Optimization: Use -P for portability and split string (avoids awk)
+    set -l df_out (df -hP /)
+    # df_out[2] is the data line. string split -n " " splits by whitespace.
+    # Columns: Filesystem, Size, Used, Avail, Capacity, Mounted on
+    # Original used awk '{print $4}' (Available space)
+    set -l disk_usage (string split -n " " $df_out[2])[4]
+    set -l disk_display "  $disk_usage "
 
-    # [NET] Interface + IP
-    set -l iface (ip route get 1.1.1.1 2>/dev/null | grep -oP 'dev \K\S+')
+    # [NET] Interface
+    # Optimization: Single ip call, use regex to extract interface (avoids grep + redundant ip call)
     set -l net_display "  Offline "
     set -l icon ""
-    if test -n "$iface"
-        set -l ip_addr (ip -4 addr show $iface | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-        if string match -q "wlan*" $iface
-            set icon ""
-        else
-            set icon ""
+
+    if set -l ip_route (ip route get 1.1.1.1 2>/dev/null)
+        set -l iface (string match -r "dev\s+(\S+)" $ip_route)[2]
+
+        if test -n "$iface"
+            if string match -q "wlan*" $iface
+                set icon ""
+            else
+                set icon ""
+            end
+            set net_display " $icon $iface "
         end
-        set net_display " $icon $iface "
     end
 
     # [TIME]
