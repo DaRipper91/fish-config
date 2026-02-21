@@ -46,6 +46,14 @@ function fish_prompt
     # -----------------------------------------------------------------
 
     # [CPU] Load
+    read -l load < /proc/loadavg
+    set -l cpu_load (string split -f1 " " $load)
+    set -l cpu_display "  $cpu_load "
+
+    # [RAM] Used
+    read -z meminfo < /proc/meminfo
+    set -l mem_total (string match -r "MemTotal:\s+(\d+)" $meminfo)[2]
+    set -l mem_free (string match -r "MemAvailable:\s+(\d+)" $meminfo)[2]
     # Optimization: Read /proc/loadavg directly (avoids cat + cut)
     read -l load_line < /proc/loadavg
     set -l cpu_load (string split -f1 " " $load_line)
@@ -74,6 +82,17 @@ function fish_prompt
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
+    set -l df_out (df -hP /)
+    set -l disk_avail (string split -n " " $df_out[2])[4]
+    set -l disk_display "  $disk_avail "
+
+    # [NET] Interface + IP
+    set -l ip_out (ip route get 1.1.1.1 2>/dev/null)
+    set -l net_display "  Offline "
+
+    if test $status -eq 0
+        set -l iface (string match -r "dev\s+(\S+)" $ip_out)[2]
+        set -l icon ""
     # Optimization: Use -P for portability and split string (avoids awk)
     set -l df_out (df -hP /)
     # df_out[2] is the data line. string split -n " " splits by whitespace.
@@ -160,8 +179,6 @@ function fish_prompt
     if test -n "$iface"
         if string match -q "wlan*" $iface
             set icon ""
-        else
-            set icon ""
         end
     end
 

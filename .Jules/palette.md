@@ -6,6 +6,9 @@
 **Learning:** The `math` builtin in Fish (v3.7.0) supports arithmetic but logical operators like `>` for floats may require workarounds or fail.
 **Action:** Use `awk 'BEGIN {exit !($val > threshold)}'` for reliable floating-point comparisons in scripts.
 
+## 2026-02-14 - Visual Feedback in Destructive Commands
+**Learning:** Destructive CLI commands (like `git push`) that run silently or with raw output can cause user anxiety and obscure errors.
+**Action:** Use `set_color` and emojis to provide clear, step-by-step visual feedback (Staging -> Committing -> Pushing) and distinct success/error states.
 ## 2025-05-18 - Destructive CLI Commands
 **Learning:** Users often run destructive commands (like git push wrappers) without confirmation or checking the state, leading to errors or unintended actions.
 **Action:** Transform silent, dangerous scripts into interactive tools that verify context (e.g., git repo, staged changes) and provide step-by-step visual feedback before executing.
