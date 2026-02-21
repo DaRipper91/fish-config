@@ -1,5 +1,7 @@
 function fish_prompt
     set -l last_status $status
+
+    # Optimization: Use $COLUMNS for terminal width (builtin)
     set -l term_width $COLUMNS
     if test -z "$term_width"
         set term_width (tput cols)
@@ -44,6 +46,13 @@ function fish_prompt
     # -----------------------------------------------------------------
 
     # [CPU] Load
+    # Optimization: Read /proc/loadavg directly (avoids cat + cut)
+    read -l load_line < /proc/loadavg
+    set -l cpu_load (string split -f1 " " $load_line)
+    set -l cpu_display "  $cpu_load "
+
+    # [RAM] Used
+    # Optimization: Read /proc/meminfo directly and regex match (avoids grep + awk)
     read -l -d ' ' cpu_load _ < /proc/loadavg
     set -l cpu_display "  $cpu_load "
 
@@ -65,6 +74,29 @@ function fish_prompt
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
+    # Optimization: Use -P for portability and split string (avoids awk)
+    set -l df_out (df -hP /)
+    # df_out[2] is the data line. string split -n " " splits by whitespace.
+    # Columns: Filesystem, Size, Used, Avail, Capacity, Mounted on
+    # Original used awk '{print $4}' (Available space)
+    set -l disk_usage (string split -n " " $df_out[2])[4]
+    set -l disk_display "  $disk_usage "
+
+    # [NET] Interface
+    # Optimization: Single ip call, use regex to extract interface (avoids grep + redundant ip call)
+    set -l net_display "  Offline "
+    set -l icon ""
+
+    if set -l ip_route (ip route get 1.1.1.1 2>/dev/null)
+        set -l iface (string match -r "dev\s+(\S+)" $ip_route)[2]
+
+        if test -n "$iface"
+            if string match -q "wlan*" $iface
+                set icon ""
+            else
+                set icon ""
+            end
+            set net_display " $icon $iface "
     set -l df_out (df -h /)
     set -l disk_display "  "(string split -n " " $df_out[2])[4]" "
 
