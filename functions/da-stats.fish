@@ -69,12 +69,11 @@ function da-stats --description "Mesh Resource Intel"
 
     set -l color_cpu green
     if test -n "$load"
-        # Optimization: Use math to scale float to int for comparison, avoiding awk
+        # Use math to compare float load directly to thresholds, avoiding truncation from -s0 scaling
         # Load thresholds: 2.0 and 4.0
-        set -l load_int (math -s0 "$load * 100")
-        if test "$load_int" -gt 400
+        if test (math "$load > 4.0") -eq 1
             set color_cpu red
-        else if test "$load_int" -gt 200
+        else if test (math "$load > 2.0") -eq 1
             set color_cpu yellow
         end
     else
