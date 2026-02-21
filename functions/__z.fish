@@ -14,8 +14,9 @@ function __z -d "Jump to a recent directory."
     function __z_legacy_escape_regex
         # taken from escape_string_pcre2 in fish
         # used to provide compatibility with fish 2
+        set -l regex_chars (string split '' '.^$*+()?[{}\\|-]')
         for c in (string split -- '' $argv)
-            if contains $c (string split '' '.^$*+()?[{}\\|-]')
+            if contains $c $regex_chars
                 printf \\
             end
             printf '%s' $c
@@ -120,9 +121,14 @@ function __z -d "Jump to a recent directory."
     '
 
     set -l qs
+    set -l use_builtin_regex_escape false
+    if string escape --style=regex '' >/dev/null 2>&1 # use builtin escape if available
+        set use_builtin_regex_escape true
+    end
+
     for arg in $argv
         set -l escaped $arg
-        if string escape --style=regex '' >/dev/null 2>&1 # use builtin escape if available
+        if test "$use_builtin_regex_escape" = true
             set escaped (string escape --style=regex -- $escaped)
         else
             set escaped (__z_legacy_escape_regex $escaped)
