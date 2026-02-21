@@ -11,7 +11,8 @@ function crawl
     echo "🔍 Scanning for files..."
     
     # 1. Find newest 50 files, ignoring errors and hidden/node_modules
-    set files (find . -type f -not -path '*/.*' -not -path './node_modules*' -printf "%T@ %p\n" 2>/dev/null | sort -nr | cut -d' ' -f2- | head -n 50)
+    # Optimization: Use -prune to skip descending into node_modules and hidden directories
+    set files (find . \( -name "node_modules" -o -name ".*" ! -name "." \) -prune -o -type f -printf "%T@ %p\n" 2>/dev/null | sort -nr | cut -d' ' -f2- | head -n 50)
 
     set context_file "temp_crawl_data.txt"
     echo "START_OF_MANIFEST" > $context_file

@@ -1,6 +1,8 @@
 function fish_prompt
     set -l last_status $status
-    set -l term_width (tput cols)
+    # Optimization: Use internal variable instead of external tput, with fallback
+    set -l term_width $COLUMNS
+    test -z "$term_width"; and set term_width (tput cols)
 
     # -----------------------------------------------------------------
     # 1. THE CHAOS ENGINE (Added Case 5: HOLO-FLUX)
@@ -38,30 +40,75 @@ function fish_prompt
     # -----------------------------------------------------------------
 
     # [CPU] Load
-    set -l cpu_load (cat /proc/loadavg | cut -d ' ' -f1)
+    # Optimization: Read directly to avoid cat/cut forks
+    read -l -a load_avg < /proc/loadavg
+    set -l cpu_load $load_avg[1]
     set -l cpu_display "  $cpu_load "
 
     # [RAM] Used
-    set -l mem_total (grep MemTotal /proc/meminfo | awk '{print $2}')
-    set -l mem_free (grep MemAvailable /proc/meminfo | awk '{print $2}')
+    # Optimization: Read file once, use string match instead of grep/awk
+    read -z mem_info < /proc/meminfo
+    set -l mem_total (string match -r "MemTotal:\s+(\d+)" $mem_info)[2]
+    set -l mem_free (string match -r "MemAvailable:\s+(\d+)" $mem_info)[2]
     set -l mem_used_mb (math "($mem_total - $mem_free) / 1024")
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
-    set -l disk_display "  "(df -h / | awk 'NR==2 {print $4}')" "
+    # Optimization: Cache df result for 60s to avoid forking on every prompt
+    if not set -q _fish_prompt_disk_ts
+        set -g _fish_prompt_disk_ts 0
+        set -g _fish_prompt_disk_cache ""
+    end
+
+    set -l current_ts (date +%s)
+    if test (math "$current_ts - $_fish_prompt_disk_ts") -gt 60
+        set -g _fish_prompt_disk_cache (df -hP / | begin; read -l _; read -l line; echo $line; end | string split -n " ")[4]
+        set -g _fish_prompt_disk_ts $current_ts
+    end
+    set -l disk_avail $_fish_prompt_disk_cache
+    set -l disk_display "  "$disk_avail" "
 
     # [NET] Interface + IP
-    set -l iface (ip route get 1.1.1.1 2>/dev/null | grep -oP 'dev \K\S+')
+    # Optimization: Read /proc/net/route directly to avoid external process fork (ip)
     set -l net_display "  Offline "
     set -l icon ""
+
+    if test -r /proc/net/route
+        read -z route_data < /proc/net/route
+        # Match lines starting with iface followed by destination 00000000
+        # Use \n to anchor to start of line to avoid partial matches on other columns
+        set -l match (string match -r '\n(\S+)\s+00000000' $route_data)
+
+        if test (count $match) -ge 2
+            set -l iface $match[2]
+            if string match -q "wlan*" $iface
+                set icon ""
+            else
+                set icon ""
+            end
+            set net_display " $icon $iface "
+    # Optimization: Read /proc/net/route directly to avoid 'ip' command fork & DNS lookup
+    set -l net_display "  Offline "
+    set -l icon ""
+    set -l iface ""
+
+    if test -r /proc/net/route
+        while read -l line
+            set -l parts (string match -r -a '\S+' -- $line)
+            # 2nd field is Destination. 00000000 is default gateway.
+            if test "$parts[2]" = "00000000"
+                set iface $parts[1]
+                break
+            end
+        end < /proc/net/route
+    end
+
     if test -n "$iface"
-        set -l ip_addr (ip -4 addr show $iface | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
         if string match -q "wlan*" $iface
             set icon ""
         else
             set icon ""
         end
-        set net_display " $icon $iface "
     end
 
     # [TIME]
