@@ -69,6 +69,24 @@ function fish_prompt
     set -l disk_display "  "$disk_avail" "
 
     # [NET] Interface + IP
+    # Optimization: Read /proc/net/route directly to avoid external process fork (ip)
+    set -l net_display "  Offline "
+    set -l icon ""
+
+    if test -r /proc/net/route
+        read -z route_data < /proc/net/route
+        # Match lines starting with iface followed by destination 00000000
+        # Use \n to anchor to start of line to avoid partial matches on other columns
+        set -l match (string match -r '\n(\S+)\s+00000000' $route_data)
+
+        if test (count $match) -ge 2
+            set -l iface $match[2]
+            if string match -q "wlan*" $iface
+                set icon ""
+            else
+                set icon ""
+            end
+            set net_display " $icon $iface "
     # Optimization: Read /proc/net/route directly to avoid 'ip' command fork & DNS lookup
     set -l net_display "  Offline "
     set -l icon ""
@@ -91,7 +109,6 @@ function fish_prompt
         else
             set icon ""
         end
-        set net_display " $icon $iface "
     end
 
     # [TIME]
