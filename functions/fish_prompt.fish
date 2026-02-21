@@ -59,18 +59,25 @@ function fish_prompt
     set -l disk_display "  "$disk_avail" "
 
     # [NET] Interface + IP
-    # Optimization: Use string match on ip route output, remove unused ip_addr calculation
-    set -l ip_route (ip route get 1.1.1.1 2>/dev/null)
+    # Optimization: Read /proc/net/route directly to avoid external process fork (ip)
     set -l net_display "  Offline "
     set -l icon ""
-    if test -n "$ip_route"
-        set -l iface (string match -r "dev\s+(\S+)" $ip_route)[2]
-        if string match -q "wlan*" $iface
-            set icon ""
-        else
-            set icon ""
+
+    if test -r /proc/net/route
+        read -z route_data < /proc/net/route
+        # Match lines starting with iface followed by destination 00000000
+        # Use \n to anchor to start of line to avoid partial matches on other columns
+        set -l match (string match -r '\n(\S+)\s+00000000' $route_data)
+
+        if test (count $match) -ge 2
+            set -l iface $match[2]
+            if string match -q "wlan*" $iface
+                set icon ""
+            else
+                set icon ""
+            end
+            set net_display " $icon $iface "
         end
-        set net_display " $icon $iface "
     end
 
     # [TIME]
