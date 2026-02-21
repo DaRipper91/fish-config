@@ -53,6 +53,13 @@ function fish_prompt
 
     # [RAM] Used
     # Optimization: Read /proc/meminfo directly and regex match (avoids grep + awk)
+    read -l -d ' ' cpu_load _ < /proc/loadavg
+    set -l cpu_display "  $cpu_load "
+
+    # [RAM] Used
+    read -z mem_info < /proc/meminfo
+    set -l mem_total (string match -r 'MemTotal:\s+(\d+)' $mem_info)[2]
+    set -l mem_free (string match -r 'MemAvailable:\s+(\d+)' $mem_info)[2]
     # Optimization: Read directly to avoid cat/cut forks
     read -l -a load_avg < /proc/loadavg
     set -l cpu_load $load_avg[1]
@@ -90,6 +97,17 @@ function fish_prompt
                 set icon ""
             end
             set net_display " $icon $iface "
+    set -l df_out (df -h /)
+    set -l disk_display "  "(string split -n " " $df_out[2])[4]" "
+
+    # [NET] Interface + IP
+    set -l route_out (ip route get 1.1.1.1 2>/dev/null)
+    set -l net_display "  Offline "
+    set -l icon ""
+
+    if test -n "$route_out"
+        set -l iface (string match -r 'dev\s+(\S+)' $route_out)[2]
+        set -l ip_addr (string match -r 'src\s+(\S+)' $route_out)[2]
     # Optimization: Cache df result for 60s to avoid forking on every prompt
     if not set -q _fish_prompt_disk_ts
         set -g _fish_prompt_disk_ts 0
