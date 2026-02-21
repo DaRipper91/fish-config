@@ -9,3 +9,7 @@
 ## 2025-05-17 - CLI Confirmation Patterns
 **Learning:** CLI tools that perform bulk actions (like `git add .`) can be dangerous. Users appreciate a moment to pause and verify the scope of the action.
 **Action:** Add an interactive confirmation step for bulk operations when running in interactive mode (no arguments).
+
+## 2025-05-18 - Async CLI Feedback
+**Learning:** Users often perceive CLI tools as "hung" when they perform background tasks like API calls without visual feedback.
+**Action:** Always provide a visual indicator (like a spinner) for long-running operations (>1s), while ensuring output is redirected properly (stderr vs stdout) to support piping.
