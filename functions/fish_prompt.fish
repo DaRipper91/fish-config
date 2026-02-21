@@ -54,17 +54,38 @@ function fish_prompt
     set -l ram_display "  "(string replace -r '\..*' '' $mem_used_mb)"M "
 
     # [DISK] Free
-    # Optimization: Use df with string splitting, avoid awk
-    set -l disk_avail (df -hP / | begin; read -l _; read -l line; echo $line; end | string split -n " ")[4]
+    # Optimization: Cache df result for 60s to avoid forking on every prompt
+    if not set -q _fish_prompt_disk_ts
+        set -g _fish_prompt_disk_ts 0
+        set -g _fish_prompt_disk_cache ""
+    end
+
+    set -l current_ts (date +%s)
+    if test (math "$current_ts - $_fish_prompt_disk_ts") -gt 60
+        set -g _fish_prompt_disk_cache (df -hP / | begin; read -l _; read -l line; echo $line; end | string split -n " ")[4]
+        set -g _fish_prompt_disk_ts $current_ts
+    end
+    set -l disk_avail $_fish_prompt_disk_cache
     set -l disk_display "  "$disk_avail" "
 
     # [NET] Interface + IP
-    # Optimization: Use string match on ip route output, remove unused ip_addr calculation
-    set -l ip_route (ip route get 1.1.1.1 2>/dev/null)
+    # Optimization: Read /proc/net/route directly to avoid 'ip' command fork & DNS lookup
     set -l net_display "  Offline "
     set -l icon ""
-    if test -n "$ip_route"
-        set -l iface (string match -r "dev\s+(\S+)" $ip_route)[2]
+    set -l iface ""
+
+    if test -r /proc/net/route
+        while read -l line
+            set -l parts (string match -r -a '\S+' -- $line)
+            # 2nd field is Destination. 00000000 is default gateway.
+            if test "$parts[2]" = "00000000"
+                set iface $parts[1]
+                break
+            end
+        end < /proc/net/route
+    end
+
+    if test -n "$iface"
         if string match -q "wlan*" $iface
             set icon ""
         else
