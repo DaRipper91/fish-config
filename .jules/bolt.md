@@ -5,3 +5,9 @@
 ## 2024-05-23 - Network Check Optimization
 **Learning:** `ip route get` is a heavy operation for a prompt. Reading `/proc/net/route` directly and parsing with regex `\n(\S+)\s+00000000` is significantly faster. However, care must be taken with regex anchors (`\n` or `^`) to ensure the correct column is matched in tab-delimited files.
 **Action:** Replace `ip` commands with `/proc` reads where possible, but verify column alignment with robust regex.
+
+---
+# Additional notes (merged from bolt.md)
+## 2024-05-22 - [Fish Shell Optimization]
+**Learning:** External commands like `dirname` in `config.fish` create measurable latency during shell startup because they fork a process. Replacing them with built-in string manipulation functions (like `string replace`) avoids this overhead, making startup faster.
+**Action:** Always prefer shell built-ins over external commands in initialization scripts.
