@@ -47,14 +47,14 @@ end
 set -l content (cat MASTER_INDEX.md)
 
 # Verify included files
-if not string match -q "*src/main.js*" $content
+if not string match -q -- "*src/main.js*" $content
     echo "❌ src/main.js missing from output"
     popd
     rm -rf $temp_dir
     exit 1
 end
 
-if not string match -q "*src/style.css*" $content
+if not string match -q -- "*src/style.css*" $content
     echo "❌ src/style.css missing from output"
     popd
     rm -rf $temp_dir
@@ -62,7 +62,7 @@ if not string match -q "*src/style.css*" $content
 end
 
 # Verify excluded files (node_modules)
-if string match -q "*node_modules/pkg/index.js*" $content
+if string match -q -- "*node_modules/pkg/index.js*" $content
     echo "❌ node_modules/pkg/index.js should be excluded"
     popd
     rm -rf $temp_dir
@@ -71,7 +71,7 @@ end
 
 # Verify excluded files (hidden file)
 # Note: we search for the specific filename pattern as it appears in the manifest
-if string match -q "*FILE: ./.env*" $content
+if string match -q -- "*FILE: ./.env*" $content
     echo "❌ .env (hidden file) should be excluded"
     popd
     rm -rf $temp_dir
@@ -79,7 +79,7 @@ if string match -q "*FILE: ./.env*" $content
 end
 
 # Verify excluded files (hidden directory file)
-if string match -q "*FILE: ./.git/config*" $content
+if string match -q -- "*FILE: ./.git/config*" $content
     echo "❌ .git/config (file in hidden dir) should be excluded"
     popd
     rm -rf $temp_dir

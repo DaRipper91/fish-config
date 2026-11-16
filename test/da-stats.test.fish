@@ -36,7 +36,7 @@ echo "0.15 0.25 0.35 1/123 12345" > $_da_stats_load_file
 
 set output (da-stats)
 
-if not string match -q "*CPU Load:*0.15*" $output
+if not string match -q -- "*CPU Load:*0.15*" $output
     echo "❌ /proc read failed. Output: $output"
     set failed 1
 end
@@ -50,7 +50,7 @@ set -g _da_stats_load_file "/non/existent/path"
 # uptime mock returns 0.25
 set output_fallback (da-stats)
 
-if not string match -q "*CPU Load:*0.25*" $output_fallback
+if not string match -q -- "*CPU Load:*0.25*" $output_fallback
     echo "❌ Uptime fallback failed. Output: $output_fallback"
     set failed 1
 end
@@ -58,22 +58,22 @@ end
 set -e _da_stats_load_file
 
 # Check other fields (from Test 1)
-if not string match -q "*test-host*" $output
+if not string match -q -- "*test-host*" $output
     echo "❌ Hostname missing"
     set failed 1
 end
 
-if not string match -q "*Disk Usage:*42%*" $output
+if not string match -q -- "*Disk Usage:*42%*" $output
     echo "❌ Disk usage incorrect"
     set failed 1
 end
 
-if not string match -q "*Memory:*50%*(8000/16000 MiB)*" $output
+if not string match -q -- "*Memory:*50%*(8000/16000 MiB)*" $output
     echo "❌ Memory usage incorrect"
     set failed 1
 end
 
-if not string match -q "*Mesh IP:*100.100.100.100*" $output
+if not string match -q -- "*Mesh IP*100.100.100.100*" $output
     echo "❌ Mesh IP incorrect"
     set failed 1
 end
@@ -94,38 +94,38 @@ source functions/da-stats.fish
 set -l output (da-stats)
 
 # Check for header
-if not string match -q "*SYSTEM INTEL*" $output
+if not string match -q -- "*SYSTEM INTEL*" $output
     echo "❌ Missing Header"
     exit 1
 end
 
 # Check for Disk Usage label
-if not string match -q "*Disk Usage*" $output
+if not string match -q -- "*Disk Usage*" $output
     echo "❌ Missing Disk Usage label"
     exit 1
 end
 
 # Check for Memory label
-if not string match -q "*Memory*" $output
+if not string match -q -- "*Memory*" $output
     echo "❌ Missing Memory label"
     exit 1
 end
 
 # Check for CPU Load label
-if not string match -q "*CPU Load*" $output
+if not string match -q -- "*CPU Load*" $output
     echo "❌ Missing CPU Load label"
     exit 1
 end
 
 # Check for Mesh IP label
-if not string match -q "*Mesh IP*" $output
+if not string match -q -- "*Mesh IP*" $output
     echo "❌ Missing Mesh IP label"
     exit 1
 end
 
 # Check for Status Summary (nominal OR recommended)
-if not string match -q "*nominal*" $output
-    if not string match -q "*recommended*" $output
+if not string match -q -- "*nominal*" $output
+    if not string match -q -- "*recommended*" $output
         echo "❌ Missing Status Summary"
         exit 1
     end
@@ -134,8 +134,8 @@ end
 # Check for bar characters (ensure at least one type of bar char is present)
 # Note: output contains color codes and potentially newlines
 # We check if the output contains either filled or empty bar segments
-if not string match -q "*█*" $output
-    if not string match -q "*░*" $output
+if not string match -q -- "*█*" $output
+    if not string match -q -- "*░*" $output
         echo "❌ Missing progress bar characters (█ or ░)"
         exit 1
     end

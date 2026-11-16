@@ -3,23 +3,23 @@ source functions/_fzf_extract_var_info.fish
 # Helper to run a test case
 function test_extract_var_info --argument-names variable_name input_content expected_output
     set -l temp_file (mktemp)
-    printf "%s" "$input_content" >$temp_file
+    printf "%b\n" "$input_content" >$temp_file
 
     set -l actual_output (_fzf_extract_var_info $variable_name $temp_file)
     set -l exit_status $status
 
     rm $temp_file
 
-    # Use string join to handle multi-line comparison correctly
-    set -l joined_actual (string join "\n" $actual_output)
+    set -l expected_formatted (printf "%b" "$expected_output")
+    set -l joined_actual (string join \n $actual_output)
 
-    if test "$joined_actual" = "$expected_output"
+    if test "$joined_actual" = "$expected_formatted"
         echo "✅ PASS: $variable_name"
         return 0
     else
         echo "❌ FAIL: $variable_name"
         echo "  Expected:"
-        printf "%s\n" "$expected_output"
+        printf "%s\n" "$expected_formatted"
         echo "  Got:"
         printf "%s\n" "$joined_actual"
         return 1

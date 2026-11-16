@@ -120,11 +120,10 @@ function da-stats --description "Mesh Resource Intel"
 
     set -l color_cpu green
     if test -n "$load"
-        # Use math to compare float load directly to thresholds, avoiding truncation from -s0 scaling
-        # Load thresholds: 2.0 and 4.0
-        if test (math "$load > 4.0") -eq 1
+        set -l load_scaled (math -s0 "$load * 100" 2>/dev/null)
+        if test -n "$load_scaled" && test $load_scaled -gt 400
             set color_cpu red
-        else if test (math "$load > 2.0") -eq 1
+        else if test -n "$load_scaled" && test $load_scaled -gt 200
             set color_cpu yellow
         end
     else
