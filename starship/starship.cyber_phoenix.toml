@@ -1,0 +1,134 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
+format = """
+[╭─](bold solar_flare)$os$username$directory$git_branch$git_status$docker_context$nodejs$rust$golang$python[](fg:arcane_purple bg:void_indigo)$jobs[](fg:void_indigo)
+[╰─](bold solar_flare)$memory_usage$character"""
+
+right_format = """$battery$time$cmd_duration$status"""
+
+palette = "cyber_phoenix"
+
+[palettes.cyber_phoenix]
+# --- Blinding Lights ---
+radiant_core = "#FFF0E5"
+solar_flare = "#FFA852"
+cyber_cyan = "#00F5D4"
+
+# --- Vibrant Mid-Tones ---
+phoenix_pink = "#FF5C8D"
+magenta_spark = "#D926A9"
+plasma_blue = "#3A86FF"
+arcane_purple = "#7B2CBF"
+
+# --- Deep Darks ---
+void_indigo = "#1E1B4B"
+abyss_blue = "#0A0A2A"
+
+[os]
+disabled = false
+style = "bg:abyss_blue fg:cyber_cyan"
+format = "[ ᛞ ]($style)"
+
+[username]
+show_always = true
+style_user = "bg:abyss_blue fg:cyber_cyan"
+style_root = "bg:abyss_blue fg:phoenix_pink"
+format = "[$user]($style)[](fg:abyss_blue bg:plasma_blue)"
+
+[directory]
+style = "bg:plasma_blue fg:radiant_core"
+format = "[ 🕯 $path ]($style)[](fg:plasma_blue bg:arcane_purple)"
+truncation_length = 3
+truncate_to_repo = true
+home_symbol = "~"
+read_only = "🔒"
+
+[git_branch]
+symbol = "🦇"
+style = "bg:arcane_purple fg:solar_flare"
+format = "[ $symbol $branch ]($style)"
+
+[git_status]
+style = "bg:arcane_purple fg:solar_flare"
+format = "[[($all_status$ahead_behind )](fg:solar_flare bg:arcane_purple)]($style)"
+ahead = "↟${count}"
+behind = "↡${count}"
+diverged = "⚡"
+untracked = "🌙${count}"
+modified = "🕷${count}"
+staged = "✦${count}"
+deleted = "💀${count}"
+stashed = "🔮${count}"
+conflicted = "⛧"
+
+[docker_context]
+symbol = "󰆧"
+style = "bg:arcane_purple fg:cyber_cyan"
+format = "[ $symbol $context ]($style)"
+
+[nodejs]
+symbol = ""
+style = "bg:arcane_purple fg:cyber_cyan"
+format = "[ $symbol ($version) ]($style)"
+
+[rust]
+symbol = ""
+style = "bg:arcane_purple fg:solar_flare"
+format = "[ $symbol ($version) ]($style)"
+
+[golang]
+symbol = ""
+style = "bg:arcane_purple fg:cyber_cyan"
+format = "[ $symbol ($version) ]($style)"
+
+[python]
+symbol = ""
+style = "bg:arcane_purple fg:solar_flare"
+format = "[ $symbol ($version) ]($style)"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "bg:abyss_blue fg:magenta_spark"
+format = "[](fg:abyss_blue bg:void_indigo)[ 🌙 $time ]($style)"
+
+[cmd_duration]
+style = "bg:void_indigo fg:solar_flare"
+format = "[](fg:void_indigo bg:abyss_blue)[ 🕯 $duration ]($style)"
+min_time = 4000
+show_milliseconds = false
+
+[status]
+disabled = false
+style = "bg:phoenix_pink fg:abyss_blue"
+format = "[](fg:phoenix_pink bg:void_indigo)[ $symbol ]($style)"
+
+[character]
+success_symbol = "[⛤](fg:#6b8e4e bold)"
+error_symbol = "[⛧](fg:#8b2942 bold)"
+vimcmd_symbol = "[🔮](fg:#a87fd1)"
+
+[jobs]
+symbol = "󰢚"
+style = "bg:void_indigo fg:solar_flare"
+format = "[ $symbol $number ]($style)"
+number_threshold = 1
+
+[battery]
+format = "[](fg:void_indigo)[ $symbol$percentage ]($style)"
+[[battery.display]]
+threshold = 20
+style = "bg:void_indigo fg:phoenix_pink"
+[[battery.display]]
+threshold = 60
+style = "bg:void_indigo fg:solar_flare"
+[[battery.display]]
+threshold = 100
+style = "bg:void_indigo fg:cyber_cyan"
+
+[memory_usage]
+disabled = false
+symbol = "󰘚"
+style = "bg:abyss_blue fg:magenta_spark"
+format = "[ $symbol ${ram} ]($style)[](fg:abyss_blue) "
+threshold = -1
